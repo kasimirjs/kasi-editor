@@ -1,0 +1,11 @@
+
+brand_src: "/assets/infracamp.png"
+brand_name: "kasimir"
+brand_href: "/"
+
+main:
+  - name: "Home"
+    href: "/"
+
+
+

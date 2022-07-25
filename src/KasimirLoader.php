@@ -8,6 +8,7 @@ class KasimirLoader
 
     const MAP = [
         "core/ka-editor-element.js",
+        "core/ka-editor-facet.js",
 
         "el/ka-editor.js",
         "el/ka-editor-container.js",
@@ -16,6 +17,9 @@ class KasimirLoader
 
         "int/ka-editor-int-floater.js",
         "int/ka-editor-int-indicator.js",
+        "int/ka-editor-int-hover-indicator.js",
+        "int/ka-editor-sidebar.js",
+        "int/ka-editor-sidebar-item.js",
 
         "int/indicator-actions.js",
     ];

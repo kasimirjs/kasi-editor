@@ -1,5 +1,5 @@
 version: 1
-from: "ghcr.io/nfra-project/kickstart-flavor-php:8.0"
+from: "ghcr.io/nfra-project/kickstart-flavor-php:8.1"
 ports: "80:80;4000:4000;4100:4100"
 
 packages: [jekyll, ruby-jekyll-coffeescript, ruby-jekyll-optional-front-matter]
@@ -13,7 +13,7 @@ command:
 
 
   jekyll: |
-    JEKYLL_LOG_LEVEL=info jekyll serve -s /opt/docs -d /var/www/html --drafts --livereload --port 4000 --livereload-port 4100 --host 0.0.0.0
+    jekyll serve -s /opt/docs -d /var/www/html --drafts --livereload --port 4000 --livereload-port 4100 --host 0.0.0.0
 
   dev:
     - killall jekyll ||  echo "no job"

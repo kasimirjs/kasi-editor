@@ -155,7 +155,7 @@ KaToolsV1.apply = (selector, scope, recursive=false) => {
 
     let attMap = {
         "textcontent": "textContent",
-        "htmlcontent": "htmlContent"
+        "htmlcontent": "innerHTML"
     }
 
     for(let attName of selector.getAttributeNames()) {
@@ -243,14 +243,14 @@ KaToolsV1.apply = (selector, scope, recursive=false) => {
             case "style":
                 if (attSelector  !== null) {
                     let val = r;
-                    if (typeof val === "number" && ["left", "top", "height", "width", "bottom", "right"].indexOf(attSelector) !== -1)
-                        r = r + "px";
-                    selector.style[KaToolsV1.strToCamelCase(attSelector)] = r;
+                    if (typeof val === "number" && ["left", "top", "height", "width", "bottom", "right", "line-height", "font-size"].indexOf(attSelector) !== -1)
+                        val = val + "px";
+                    selector.style[KaToolsV1.strToCamelCase(attSelector)] = val;
                     break;
                 }
                 for (let cname in r) {
                     let val = r[cname];
-                    if (typeof val === "number" && ["left", "top", "height", "width", "bottom", "right"].indexOf(cname) !== -1)
+                    if (typeof val === "number" && ["left", "top", "height", "width", "bottom", "right", "line-height", "font-size"].indexOf(cname) !== -1)
                         val = val + "px";
                     selector.style[KaToolsV1.strToCamelCase(cname)] = val;
                 }
@@ -393,11 +393,11 @@ KaToolsV1.apply = (selector, scope, recursive=false) => {
             case "prop":
                 if (attSelector  !== null) {
                     // Set Property directly
-                    selector[attSelector] = r;
+                    selector[KaToolsV1.strToCamelCase(attSelector)] = r;
                     break;
                 }
                 for (let cname in r) {
-                    selector[cname] = r[cname];
+                    selector[KaToolsV1.strToCamelCase(cname)] = r[cname];
                 }
                 break;
 
@@ -536,6 +536,7 @@ KaToolsV1.Template = class {
         if (typeof this.template.__kasibling === "undefined")
             this.template.__kasibling = this.template.nextElementSibling;
 
+        this.__renderCount = 0;
         this.$scope = {};
     }
 
@@ -660,6 +661,7 @@ KaToolsV1.Template = class {
         if ($scope === null)
             $scope = this.$scope;
         this.$scope = $scope;
+        this.__renderCount++;
 
         if (this.template.hasAttribute("ka.for")) {
             this._renderFor($scope, this.template.getAttribute("ka.for"));
@@ -673,6 +675,16 @@ KaToolsV1.Template = class {
             this._maintain($scope, this.template.__kachilds);
         }
     }
+
+    /**
+     * Return true if this template was renderd the first time
+     *
+     * @returns {boolean}
+     */
+    isFirstRender() {
+        return this.__renderCount === 1;
+    }
+
 };
 
 /* from app/getArgs.js */
@@ -829,6 +841,9 @@ KaToolsV1.provider = new class {
     }
 }();
 
+
+
+
 /* from ce/ce_define.js */
 /**
  * Define a new CustomElement
@@ -925,8 +940,8 @@ KaToolsV1.loadHtml = async (url) => {
 
 KaToolsV1.CustomElement = class extends HTMLElement {
 
-    constructor() {
-        super();
+    constructor(props) {
+        super(props);
         /**
          *
          * @public
@@ -935,6 +950,12 @@ KaToolsV1.CustomElement = class extends HTMLElement {
          */
         this.__tpl = null;
 
+        /**
+         *
+         * @type {KaToolsV1.EventDispatcher}
+         * @private
+         */
+        this.__eventDispatcher = null;
         this.__isConnected = false;
     }
 
@@ -947,6 +968,14 @@ KaToolsV1.CustomElement = class extends HTMLElement {
         return this.__tpl
     }
 
+    /**
+     * Get the application internal event dispatcher
+     *
+     * @returns {KaToolsV1.EventDispatcher}
+     */
+    get $eventDispatcher () {
+        return this.__eventDispatcher
+    }
 
     isConnected() {
         return this.isConnected;
@@ -961,6 +990,7 @@ KaToolsV1.CustomElement = class extends HTMLElement {
     }
 
     async connectedCallback() {
+        this.__eventDispatcher = await KaToolsV1.provider.get("$eventDispatcher");
         let callback = this.constructor.__callback;
         if (callback === null) {
         } else {
@@ -1047,4 +1077,53 @@ KaToolsV1.CustomElement = class extends HTMLElement {
 })()
 
 /* from core/router.js */
+
+
+/* from default/event-dispatcher.js */
+/**
+ * Access this by using Dependency Injection $eventDispatcher
+ *
+ * @type {KaToolsV1.EventDispatcher}
+ */
+KaToolsV1.EventDispatcher = class {
+
+    constructor() {
+        this.index = 0;
+        this.listeners = {};
+    }
+
+    /**
+     *
+     * @param eventName {string}
+     * @param fn {function}
+     * @returns {string}
+     */
+    addEventListener(eventName, fn) {
+        let listenerId = "e" + this.index++;
+        this.listeners[listenerId] = {
+            on: eventName,
+            fn: fn
+        };
+        return listenerId;
+    }
+
+    removeEventListener(listenerId) {
+        delete this.listeners[listenerId];
+    }
+
+    /**
+     *
+     * @param eventName {string}
+     * @param payload {*}
+     */
+    async triggerEvent (eventName, payload={}) {
+        for (let curName in this.listeners) {
+            if (this.listeners[curName].on === eventName)
+                await this.listeners[curName].fn(payload)
+        }
+    }
+}
+
+KaToolsV1.provider.defineService("$eventDispatcher", () => new KaToolsV1.EventDispatcher());
+
 

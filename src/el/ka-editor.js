@@ -11,43 +11,41 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
      * @type {KaEditorElementIndicator}
      */
     #indicator;
-
+    /**
+     * @type {KaEditorHoverIndicator}
+     */
+    #hoverIndicator;
     constructor() {
         super();
     }
 
-    #getAllPropNames() {
-        let ret = [];
-        for(let en in KaIndicatiorActions)
-            ret.push(...KaIndicatiorActions[en].on);
-        return ret;
-    }
-
-    #getEditableElement(curTarget) {
-        let listOfDataNames = this.#getAllPropNames();
-
-        if (listOfDataNames.some(r => curTarget.getAttributeNames().includes(r)))
-            return curTarget;
-        if (curTarget.parentElement === this)
-            return null;
-        return this.#getEditableElement(curTarget.parentElement);
-    }
 
     async connected() {
+        let facet = new KaEditorFacet();
+
         this.#floater = document.createElement("ka-editor-int-floater");
         this.parentElement.appendChild(this.#floater);
         this.#indicator = document.createElement("ka-editor-int-indicator");
         this.parentElement.appendChild(this.#indicator);
+        this.#hoverIndicator = document.createElement("ka-editor-int-hover-indicator");
+        this.parentElement.appendChild(this.#hoverIndicator);
 
         this.addEventListener("mouseover", (e) => {
             let target = e.target;
 
-            target = this.#getEditableElement(target);
+            target = facet.getEditableParentElement(target);
             if (target === null)
                 return;
 
-            this.#indicator.setElement(target);
-        })
+            this.$eventDispatcher.triggerEvent("hoverElement", {element: target});
 
+        })
+        document.addEventListener("click", (e) => {
+            let target = e.target;
+            console.log("bocy click", e);
+            target = facet.getEditableParentElement(target);
+            this.$eventDispatcher.triggerEvent("selectElement", {element: target});
+
+        })
     }
 });

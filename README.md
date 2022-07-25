@@ -1,5 +1,4 @@
-# kasi-embed
-Embedded WebComponents
+# KasimirJS Editor
 
 
 

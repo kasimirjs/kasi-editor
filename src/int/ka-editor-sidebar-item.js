@@ -51,6 +51,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                 this.scope.selected = false;
 
                 if (payload.element === null) {
+                    this.$tpl.render();
                     return;
                 }
 

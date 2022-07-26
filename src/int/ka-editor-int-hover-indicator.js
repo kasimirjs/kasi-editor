@@ -29,6 +29,7 @@ class KaEditorHoverIndicator extends KaEditorElement {
             return;
         if (element === null) {
             this.hidden = true;
+            this.$tpl.render();
             return
         }
 
@@ -43,7 +44,12 @@ class KaEditorHoverIndicator extends KaEditorElement {
 
 
         this.$tpl.render(this.#scope);
-
+        if (this.$tpl.isFirstRender()) {
+            window.setInterval(()=> {
+                if (this.#scope.element !== null)
+                    this.$tpl.render()
+            }, 200);
+        }
     }
 
     async connected() {
@@ -64,10 +70,12 @@ KaToolsV1.ce_define("ka-editor-int-hover-indicator",  KaEditorHoverIndicator , K
 <style>
 
 .indicator {
-    border-top: 1px solid #b6effb;
+    background-color: #0f5132;
+
+    opacity: 0.2;
     position: absolute;
-    z-index: 9998;
-    height: 0;
+    z-index: 9997;
+
 }
 
 button {
@@ -82,11 +90,10 @@ button:hover {
 }
 
 </style>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator">
-
-
-</div>
-<div class="indicator" ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator" style="height:2px;"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left + element.getBoundingClientRect().width" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left" class="indicator" style="height: 2px"></div>
 
 
 `, {shadowDom: true});

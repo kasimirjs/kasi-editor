@@ -68,6 +68,18 @@ class KaEditorFacet {
         return listOfDataNames.some(r => element.getAttributeNames().includes(r))
     }
 
+
+    getActionsForElement(element, requireKey = null) {
+        let actions = Object.keys(KaIndicatorActions)
+            .filter((key) => KaIndicatorActions[key].on.some(key => element.hasAttribute(key)));
+
+        if (requireKey !== null)
+            actions = actions.filter((key) => typeof KaIndicatorActions[key][requireKey] !== "undefined")
+
+        let ret =  actions.reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
+        return ret;
+    }
+
     /**
      * Find the first editable parent
      *

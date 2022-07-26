@@ -30,6 +30,25 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         this.#hoverIndicator = document.createElement("ka-editor-int-hover-indicator");
         this.parentElement.appendChild(this.#hoverIndicator);
 
+        if (this.hasAttribute("data-ed-template")) {
+            this.parentElement.appendChild((await KaToolsV1.loadHtml(this.getAttribute("data-ed-template"))).content);
+
+        }
+        let curSelectedElement = null;
+
+        // Manage the selected Element and apply actions
+        this.$eventDispatcher.addEventListener("selectElement", (e) => {
+            if (curSelectedElement !== null && curSelectedElement !== e.element) {
+                Object.values((new KaEditorFacet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+                curSelectedElement = null;
+            }
+            if (e.element !== null && e.element !== curSelectedElement) {
+                Object.values((new KaEditorFacet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
+                curSelectedElement = e.element
+            }
+
+        })
+
         this.addEventListener("mouseover", (e) => {
             let target = e.target;
 
@@ -42,7 +61,6 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         })
         document.addEventListener("click", (e) => {
             let target = e.target;
-            console.log("bocy click", e);
             target = facet.getEditableParentElement(target);
             this.$eventDispatcher.triggerEvent("selectElement", {element: target});
 

@@ -77,6 +77,18 @@ class KaEditorFacet {
         return listOfDataNames.some(r => element.getAttributeNames().includes(r))
     }
 
+
+    getActionsForElement(element, requireKey = null) {
+        let actions = Object.keys(KaIndicatorActions)
+            .filter((key) => KaIndicatorActions[key].on.some(key => element.hasAttribute(key)));
+
+        if (requireKey !== null)
+            actions = actions.filter((key) => typeof KaIndicatorActions[key][requireKey] !== "undefined")
+
+        let ret =  actions.reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
+        return ret;
+    }
+
     /**
      * Find the first editable parent
      *
@@ -130,6 +142,25 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         this.#hoverIndicator = document.createElement("ka-editor-int-hover-indicator");
         this.parentElement.appendChild(this.#hoverIndicator);
 
+        if (this.hasAttribute("data-ed-template")) {
+            this.parentElement.appendChild((await KaToolsV1.loadHtml(this.getAttribute("data-ed-template"))).content);
+
+        }
+        let curSelectedElement = null;
+
+        // Manage the selected Element and apply actions
+        this.$eventDispatcher.addEventListener("selectElement", (e) => {
+            if (curSelectedElement !== null && curSelectedElement !== e.element) {
+                Object.values((new KaEditorFacet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+                curSelectedElement = null;
+            }
+            if (e.element !== null && e.element !== curSelectedElement) {
+                Object.values((new KaEditorFacet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
+                curSelectedElement = e.element
+            }
+
+        })
+
         this.addEventListener("mouseover", (e) => {
             let target = e.target;
 
@@ -142,7 +173,6 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         })
         document.addEventListener("click", (e) => {
             let target = e.target;
-            console.log("bocy click", e);
             target = facet.getEditableParentElement(target);
             this.$eventDispatcher.triggerEvent("selectElement", {element: target});
 
@@ -192,54 +222,6 @@ KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $rejec
 
 /* from int/ka-editor-int-floater.js */
 
-class KaEditorElementFloater extends KaEditorElement {
-
-    async connected() {
-        let scope = {
-            position: {
-                top: 200,
-                left: 200,
-                height: 100,
-                width: 100
-            }
-        }
-        this.$tpl.render(scope);
-
-    }
-}
-
-
-KaToolsV1.ce_define("ka-editor-int-floater",  KaEditorElementFloater , KaToolsV1.html`
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-<link href="/ka-editor-shadow.css" rel="stylesheet">
-<style>
-.floater {
-
-    position: absolute;
-    z-index: 999999;
-
-}
-
-.floater .backdrop {
-    border: 1px solid black;
-    background-color: #0a58ca;
-    opacity: 0.1;
-    position: absolute;
-    width: inherit;
-    height: inherit;
-
-}
-
-</style>
-<div ka.style="position" class="floater">
-    <div class="backdrop"></div>
-    <div>Im floating</div>
-</div>
-
-
-`, {shadowDom: true});
-
 /* from int/ka-editor-int-indicator.js */
 
 class KaEditorElementIndicator extends KaEditorElement {
@@ -273,30 +255,33 @@ class KaEditorElementIndicator extends KaEditorElement {
             return;
         if (element === null) {
             this.hidden = true;
+            this.#scope.element = null;
             return
         }
-
-        console.log(window.scrollY)
 
         this.hidden = false;
         this.#scope.element = element;
         this.#scope.popupOpen = false;
 
         // Filter Actions according to on: requriements
-        this.#scope.actions = Object.keys(KaIndicatorActions)
-            .filter((key) => KaIndicatorActions[key].on.some(key => element.hasAttribute(key)))
-            .reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
+        this.#scope.actions = (new KaEditorFacet()).getActionsForElement(element, "action")
 
         this.$tpl.render(this.#scope);
         if (this.$tpl.isFirstRender()) {
+
+            window.setInterval(()=> {
+                if (this.#scope.element !== null)
+                    this.$tpl.render()
+            }, 200);
             this.#scope.$ref.btn1.addEventListener("click", (e) => e.stopPropagation());
         }
+
+
 
     }
 
     async connected() {
         this.$eventDispatcher.addEventListener("selectElement", (payload) => {
-            console.log(payload);
             this.setElement(payload.element);
         })
 
@@ -320,9 +305,10 @@ KaToolsV1.ce_define("ka-editor-int-indicator",  KaEditorElementIndicator , KaToo
 <style>
 
 .indicator {
-    border-top: 1px solid #0b5ed7;
+    background-color: #0b5ed7;
+
     position: absolute;
-    z-index: 9999;
+    z-index: 9998;
     height: 0;
 }
 
@@ -337,26 +323,37 @@ button:hover {
     opacity: 1;
 }
 
-</style>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator">
-    <div ka.ref="'btn1'" class="btn-group float-end">
-      <button ka.on.click="$fn.toggle()" ka.ref="'button1'" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
-              <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
-            </svg>
-        </i>
-      </button>
-      <ul class="dropdown-menu" ka.classlist.show="popupOpen" style="z-index: 9999">
-          <li>open</li>
-        <li ka.for="let aName in actions"><a class="dropdown-item" ka.on.click="$fn.runAction(aName)" href="javascript:void(0);">[[ actions[aName].name ]]</a></li>
+    .indicator-menu {
+        height: 10px;
+        position: absolute;
+        z-index: 9999;
+    }
 
-      </ul>
+</style>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator-menu">
+    <div ka.ref="'btn1'" class="btn-group float-end" >
+        <button ka.on.click="$fn.toggle()" ka.ref="'button1'" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
+                    <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
+                </svg>
+            </i>
+        </button>
+        <ul class="dropdown-menu position-absolute end-0" ka.classlist.show="popupOpen" style="position:absolute; z-index: 999999">
+
+            <li ka.for="let aName in actions"><a class="dropdown-item" ka.on.click="$fn.runAction(aName)" href="javascript:void(0);">[[ actions[aName].name ]]</a></li>
+
+        </ul>
 
     </div>
-
 </div>
-<div class="indicator" ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left"></div>
+
+
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator" style="height: 3px">
+</div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:3px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left + element.getBoundingClientRect().width" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:3px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left" class="indicator" style="height: 3px"></div>
 
 
 `, {shadowDom: true});
@@ -393,6 +390,7 @@ class KaEditorHoverIndicator extends KaEditorElement {
             return;
         if (element === null) {
             this.hidden = true;
+            this.$tpl.render();
             return
         }
 
@@ -407,7 +405,12 @@ class KaEditorHoverIndicator extends KaEditorElement {
 
 
         this.$tpl.render(this.#scope);
-
+        if (this.$tpl.isFirstRender()) {
+            window.setInterval(()=> {
+                if (this.#scope.element !== null)
+                    this.$tpl.render()
+            }, 200);
+        }
     }
 
     async connected() {
@@ -428,10 +431,12 @@ KaToolsV1.ce_define("ka-editor-int-hover-indicator",  KaEditorHoverIndicator , K
 <style>
 
 .indicator {
-    border-top: 1px solid #b6effb;
+    background-color: #0f5132;
+
+    opacity: 0.2;
     position: absolute;
-    z-index: 9998;
-    height: 0;
+    z-index: 9997;
+
 }
 
 button {
@@ -446,11 +451,10 @@ button:hover {
 }
 
 </style>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator">
-
-
-</div>
-<div class="indicator" ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator" style="height:2px;"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left + element.getBoundingClientRect().width" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left" class="indicator" style="height: 2px"></div>
 
 
 `, {shadowDom: true});
@@ -586,6 +590,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                 this.scope.selected = false;
 
                 if (payload.element === null) {
+                    this.$tpl.render();
                     return;
                 }
 
@@ -638,6 +643,23 @@ const KaIndicatorActions = {
     name: {
         name: "Name",
         on: ["data-ed-name"],
+
+    },
+    text: {
+        on: ["data-ed-text"],
+        /**
+         *
+         * @param element {HTMLElement}
+         */
+        onSelect: (element) => {
+            element.contentEditable = true
+            element.focus();
+        },
+        onDeSelect: (element) => {
+            if (element.textContent === "")
+                element.innerHTML = "";
+            element.contentEditable = false
+        }
 
     },
     duplicate: {

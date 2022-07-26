@@ -5,6 +5,23 @@ const KaIndicatorActions = {
         on: ["data-ed-name"],
 
     },
+    text: {
+        on: ["data-ed-text"],
+        /**
+         *
+         * @param element {HTMLElement}
+         */
+        onSelect: (element) => {
+            element.contentEditable = true
+            element.focus();
+        },
+        onDeSelect: (element) => {
+            if (element.textContent === "")
+                element.innerHTML = "";
+            element.contentEditable = false
+        }
+
+    },
     duplicate: {
         name: "Duplicate",
         on: ["data-ed-repeat"],

@@ -74,6 +74,19 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
 // language=html
 KaToolsV1.html`
 
+    <style>
+        .selected {
+            background-color: #0c63e4;
+            border: 1px solid black;
+            color: white;
+            font-weight: bold;
+            padding-left: 4px;
+            padding-right: 4px;
+            border-radius: 8px;
+        }
+    </style>
+
+
 <div>
     <div class="position-absolute end-0" style="z-index: 2" ka.if="selected">
         <div class="d-inline-block" ka.for="let action of (new KaEditorFacet()).getIndicatorActions(element.elem)" style="width: 25px; height: 25px; overflow:hidden">
@@ -88,7 +101,10 @@ KaToolsV1.html`
                 <path d="M6.854 4.646a.5.5 0 0 1 0 .708L4.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0zm2.292 0a.5.5 0 0 0 0 .708L11.793 8l-2.647 2.646a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708 0z"/>
             </svg>
         </i>
-        <span class="d-inline-block" ka.classlist.fw-bold="selected" ka.classlist.border="selected" ka.classlist.border-primary="selected">[[element.elem.hasAttribute('data-ed-name') ? element.elem.getAttribute('data-ed-name') : element.elem.tagName]]</span>
+        <span class="d-inline-block" ka.classlist.selected="selected">
+            <span ka.if="element.elem.hasAttribute('data-ed-name')">[[ element.elem.getAttribute('data-ed-name')  ]]</span>
+            <span ka.if=" ! element.elem.hasAttribute('data-ed-name')" class="font-monospace">[[ element.elem.tagName ]]</span>
+        </span>
     </div>
 
     <div class="ps-4 ">

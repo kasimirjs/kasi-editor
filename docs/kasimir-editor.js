@@ -1,5 +1,16 @@
 /* KasimirJS EMBED - documentation: https://kasimirjs.infracamp.org - Author: Matthias Leuffen <m@tth.es>*/
 
+/* from core/init.js */
+
+const KaEditorConfig = {
+    cssStyles: [
+        "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css",
+    ],
+    sidebarTopHtml: '<img src="https://leuffen.de/assets/leuffen-logo-big.svg" height="48" style="margin-left: -10px">'
+
+
+}
+
 /* from core/ka-editor-element.js */
 
 class KaEditorElement extends KaToolsV1.CustomElement {
@@ -296,12 +307,11 @@ class KaEditorElementIndicator extends KaEditorElement {
 
 // language=html
 KaToolsV1.ce_define("ka-editor-int-indicator",  KaEditorElementIndicator , KaToolsV1.html`
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
 
 
 
-<link href="/ka-editor-shadow.css" rel="stylesheet">
+
 <style>
 
 .indicator {
@@ -422,13 +432,7 @@ class KaEditorHoverIndicator extends KaEditorElement {
 
 // language=html
 KaToolsV1.ce_define("ka-editor-int-hover-indicator",  KaEditorHoverIndicator , KaToolsV1.html`
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
-
-
-
-<link href="/ka-editor-shadow.css" rel="stylesheet">
-<style>
+    <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
 
 .indicator {
     background-color: #0f5132;
@@ -495,8 +499,8 @@ KaToolsV1.ce_define("ka-editor-sidebar",
     },
     // language=html
     KaToolsV1.html`
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="/ka-editor-shadow.css" rel="stylesheet">
+        <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
+
 
         <style>
             .sidebar {
@@ -520,6 +524,7 @@ KaToolsV1.ce_define("ka-editor-sidebar",
         </style>
 
         <div ka.ref="'sidebar'" class="sidebar" ka.classlist.open="isOpen">
+            <div style="position: absolute; top:0px;height:80px;left:2px;right:2px;overflow: hidden;" ka.htmlcontent="KaEditorConfig.sidebarTopHtml"></div>
 
             <div ka.ref="'scroll1'" style="position: absolute; top:80px;bottom:80px;left:2px;right:2px;overflow-y: scroll;background-color: white">
                 <ka-editor-sidebar-item ka.for="let e of elementTree.children" ka.prop.element="e"></ka-editor-sidebar-item>
@@ -613,6 +618,19 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
 // language=html
 KaToolsV1.html`
 
+    <style>
+        .selected {
+            background-color: #0c63e4;
+            border: 1px solid black;
+            color: white;
+            font-weight: bold;
+            padding-left: 4px;
+            padding-right: 4px;
+            border-radius: 8px;
+        }
+    </style>
+
+
 <div>
     <div class="position-absolute end-0" style="z-index: 2" ka.if="selected">
         <div class="d-inline-block" ka.for="let action of (new KaEditorFacet()).getIndicatorActions(element.elem)" style="width: 25px; height: 25px; overflow:hidden">
@@ -627,7 +645,10 @@ KaToolsV1.html`
                 <path d="M6.854 4.646a.5.5 0 0 1 0 .708L4.207 8l2.647 2.646a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 0 1 .708 0zm2.292 0a.5.5 0 0 0 0 .708L11.793 8l-2.647 2.646a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708 0z"/>
             </svg>
         </i>
-        <span class="d-inline-block" ka.classlist.fw-bold="selected" ka.classlist.border="selected" ka.classlist.border-primary="selected">[[element.elem.hasAttribute('data-ed-name') ? element.elem.getAttribute('data-ed-name') : element.elem.tagName]]</span>
+        <span class="d-inline-block" ka.classlist.selected="selected">
+            <span ka.if="element.elem.hasAttribute('data-ed-name')">[[ element.elem.getAttribute('data-ed-name')  ]]</span>
+            <span ka.if=" ! element.elem.hasAttribute('data-ed-name')" class="font-monospace">[[ element.elem.tagName ]]</span>
+        </span>
     </div>
 
     <div class="ps-4 ">

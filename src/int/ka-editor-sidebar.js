@@ -33,8 +33,8 @@ KaToolsV1.ce_define("ka-editor-sidebar",
     },
     // language=html
     KaToolsV1.html`
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link href="/ka-editor-shadow.css" rel="stylesheet">
+        <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
+
 
         <style>
             .sidebar {
@@ -58,6 +58,7 @@ KaToolsV1.ce_define("ka-editor-sidebar",
         </style>
 
         <div ka.ref="'sidebar'" class="sidebar" ka.classlist.open="isOpen">
+            <div style="position: absolute; top:0px;height:80px;left:2px;right:2px;overflow: hidden;" ka.htmlcontent="KaEditorConfig.sidebarTopHtml"></div>
 
             <div ka.ref="'scroll1'" style="position: absolute; top:80px;bottom:80px;left:2px;right:2px;overflow-y: scroll;background-color: white">
                 <ka-editor-sidebar-item ka.for="let e of elementTree.children" ka.prop.element="e"></ka-editor-sidebar-item>

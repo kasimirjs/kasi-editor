@@ -71,12 +71,11 @@ class KaEditorElementIndicator extends KaEditorElement {
 
 // language=html
 KaToolsV1.ce_define("ka-editor-int-indicator",  KaEditorElementIndicator , KaToolsV1.html`
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
 
 
 
-<link href="/ka-editor-shadow.css" rel="stylesheet">
+
 <style>
 
 .indicator {

@@ -7,6 +7,7 @@ class KasimirLoader
 
 
     const MAP = [
+        "core/init.js",
         "core/ka-editor-element.js",
         "core/ka-editor-facet.js",
 

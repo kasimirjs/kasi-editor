@@ -1,16 +1,22 @@
 
-<template id="header">
-    <div editable>Hello word</div>
+<template data-ed-id="bs-row">
+    <div class="row" data-ed-allow-child="bs-col">
+    </div>
 </template>
 
-<template id="header1">
-    <h1>
-        This is some Header
+<template data-ed-id="bs-col">
+    <div class="col" data-ed-allow-child="*"></div>
+</template>
+
+
+<template data-ed-id="h1">
+    <h1 data-ed-text data-ed-name="Header1">
+        Header 1 Element
     </h1>
 </template>
 
-<template id="header2">
-    <h2>
-        This is some Header
-    </h2>
+<template data-ed-id="p">
+    <p data-ed-text data-ed-repeat data-ed-name="Paragraph">
+        Paragraph
+    </p>
 </template>

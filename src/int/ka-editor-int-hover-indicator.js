@@ -37,12 +37,6 @@ class KaEditorHoverIndicator extends KaEditorElement {
         this.#scope.element = element;
         this.#scope.popupOpen = false;
 
-        // Filter Actions according to on: requriements
-        this.#scope.actions = Object.keys(KaIndicatorActions)
-            .filter((key) => KaIndicatorActions[key].on.some(key => element.hasAttribute(key)))
-            .reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
-
-
         this.$tpl.render(this.#scope);
         if (this.$tpl.isFirstRender()) {
             window.setInterval(()=> {
@@ -62,14 +56,12 @@ class KaEditorHoverIndicator extends KaEditorElement {
 // language=html
 KaToolsV1.ce_define("ka-editor-int-hover-indicator",  KaEditorHoverIndicator , KaToolsV1.html`
     <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
-
+<style>
 .indicator {
-    background-color: #0f5132;
+    background-color: black;
 
     opacity: 0.2;
     position: absolute;
-    z-index: 9997;
-
 }
 
 button {
@@ -84,10 +76,10 @@ button:hover {
 }
 
 </style>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator" style="height:2px;"></div>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
-<div ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left + element.getBoundingClientRect().width" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
-<div ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left" class="indicator" style="height: 2px"></div>
+<div  ka.style.z-index="KaEditorConfig.zindex.indicatorHover" ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator" style="height:2px;"></div>
+<div ka.style.z-index="KaEditorConfig.zindex.indicatorHover" ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.z-index="KaEditorConfig.zindex.indicatorHover" ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left + element.getBoundingClientRect().width" ka.style.height="element.getBoundingClientRect().height" class="indicator" style="width:2px"></div>
+<div ka.style.z-index="KaEditorConfig.zindex.indicatorHover" ka.style.top="element.getBoundingClientRect().top + element.getBoundingClientRect().height + window.scrollY" ka.style.width="element.getBoundingClientRect().width" ka.style.left="element.getBoundingClientRect().left" class="indicator" style="height: 2px"></div>
 
 
 `, {shadowDom: true});

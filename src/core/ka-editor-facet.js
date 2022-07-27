@@ -50,7 +50,7 @@ class KaEditorFacet {
             let a = KaIndicatorActions[an];
             if (typeof a.getIndicator === "undefined" || typeof a.indicatorRow === "undefined")
                 continue;
-            if (a.on.some((name) => element.hasAttribute(name)))
+            if (a.isValid(element))
                 ret[a.indicatorRow] = a;
         }
         return ret;
@@ -58,20 +58,20 @@ class KaEditorFacet {
 
 
     /**
-     * Return true if this element is editable
+     * Return true if this element is editable (has at least one data-ed attribute
      *
      * @param element {HTMLElement}
      * @returns {boolean}
      */
     isEditableElement(element) {
-        let listOfDataNames = this.getAllPropNames();
-        return listOfDataNames.some(r => element.getAttributeNames().includes(r))
+        return element.getAttributeNames().some(r => r.startsWith("data-ed"))
     }
 
 
     getActionsForElement(element, requireKey = null) {
         let actions = Object.keys(KaIndicatorActions)
-            .filter((key) => KaIndicatorActions[key].on.some(key => element.hasAttribute(key)));
+            .filter((key) => KaIndicatorActions[key].isValid(element));
+
 
         if (requireKey !== null)
             actions = actions.filter((key) => typeof KaIndicatorActions[key][requireKey] !== "undefined")
@@ -79,6 +79,19 @@ class KaEditorFacet {
         let ret =  actions.reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
         return ret;
     }
+
+    /**
+     *
+     * @param element
+     * @param requireKey
+     * @return *[]
+     */
+    getActionsArrayForElement (element, requireKey = null) {
+        let actions = this.getActionsForElement(element, requireKey);
+
+        return Object.keys(actions).map((key) => actions[key]);
+    }
+
 
     /**
      * Find the first editable parent
@@ -97,5 +110,63 @@ class KaEditorFacet {
         return this.getEditableParentElement(curTarget.parentElement);
     }
 
+
+    /**
+     * Returns all Templates that can be inserted as child to this node
+     *
+     * @param curTarget {HTMLElement}
+     * @returns {HTMLTemplateElement[]}
+     */
+    getAllowedChildTemplates (curTarget) {
+        if ( ! curTarget.hasAttribute("data-ed-allow-child"))
+            return [];
+        let selectIds = curTarget.getAttribute("data-ed-allow-child").split(" ");
+
+        let tpls = document.querySelectorAll("template[data-ed-id]");
+        let ret = [];
+        for(let selectId of selectIds) {
+            if (selectId.trim() === "")
+                continue;
+            for(let curTpl of tpls) {
+                let regex = `^${selectId}$`.replace("*", ".*");
+                if (curTpl.getAttribute("data-ed-id").match(new RegExp(regex))) {
+                    ret.push(curTpl);
+                }
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Initialize a newly or copied element
+     *
+     * Will execute data-ed-oninit="javascirpt" code
+     * @param element {HTMLElement}
+     */
+    initElement(element) {
+        if (typeof element.hasAttribute !== "undefined" && element.hasAttribute("data-ed-oninit")) {
+            console.log (element);
+            KaToolsV1.eval(element.getAttribute("data-ed-oninit"), {}, element, {});
+        }
+        Array.from(element.children).forEach((e) => this.initElement(e));
+    }
+
+
+    async showActions(element, positionElementOrEvent) {
+        let m = new KaToolsV1.ContextMenu();
+        await m.ready();
+
+        let actions = this.getActionsArrayForElement(element).map((c) =>
+            new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.action(element))
+        );
+
+        let action = await m.show(positionElementOrEvent, actions);
+
+        await KaToolsV1.sleep(100);
+
+        console.log("update");
+        (await KaToolsV1.provider.get("$eventDispatcher")).triggerEvent("update");
+
+    }
 
 }

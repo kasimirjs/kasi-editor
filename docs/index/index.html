@@ -7,9 +7,9 @@ permalink: /
 
 
 <div class="container">
-    <ka-editor data-ed-template="/index/template.tpl.html">
+    <ka-editor data-ed-template="/index/template.tpl.html /index/bs-accordion.tpl.html">
 
-        <div data-ed-repeat>
+        <div data-ed-repeat data-ed-allow-child="*">
 
             <h1 data-ed-text data-ed-name="Header1">Hello World</h1>
             <p data-ed-text data-ed-name="Para1" data-ed-repeat></p>
@@ -33,5 +33,3 @@ permalink: /
 
     </ka-editor>
 </div>
-
-<ka-editor-sidebar></ka-editor-sidebar>

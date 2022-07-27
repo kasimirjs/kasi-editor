@@ -2,38 +2,39 @@
 
 KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
 
-    /**
-     * @type {KaEditorElementFloater}
-     */
-    #floater;
 
-    /**
-     * @type {KaEditorElementIndicator}
-     */
-    #indicator;
-    /**
-     * @type {KaEditorHoverIndicator}
-     */
-    #hoverIndicator;
     constructor() {
         super();
+        this.elements = {
+            floater: null,
+            indicator: null,
+            hoverIndicator: null,
+            sidebar: null,
+
+        }
     }
 
 
     async connected() {
         let facet = new KaEditorFacet();
 
-        this.#floater = document.createElement("ka-editor-int-floater");
-        this.parentElement.appendChild(this.#floater);
-        this.#indicator = document.createElement("ka-editor-int-indicator");
-        this.parentElement.appendChild(this.#indicator);
-        this.#hoverIndicator = document.createElement("ka-editor-int-hover-indicator");
-        this.parentElement.appendChild(this.#hoverIndicator);
+        this.elements.floater = KaToolsV1.createElement("ka-editor-int-floater", null, null, document.body);
+        this.elements.indicator = KaToolsV1.createElement("ka-editor-int-indicator", null, null, document.body);
+        this.elements.hoverIndicator = KaToolsV1.createElement("ka-editor-int-hover-indicator", null, null, document.body);
+        this.elements.sidebar = KaToolsV1.createElement("ka-editor-sidebar", null, null, document.body);
 
+
+        // Import the templates
         if (this.hasAttribute("data-ed-template")) {
-            this.parentElement.appendChild((await KaToolsV1.loadHtml(this.getAttribute("data-ed-template"))).content);
-
+            for (let url of this.getAttribute("data-ed-template").split(" ")) {
+                let tpl = document.createElement("ka-ed-imported-templates");
+                tpl.hidden = true;
+                document.body.appendChild(tpl);
+                tpl.append((await KaToolsV1.loadHtml(url)).content)
+                KaToolsV1.execImportedScriptTags(tpl, url);
+            }
         }
+
         let curSelectedElement = null;
 
         // Manage the selected Element and apply actions
@@ -61,9 +62,24 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         })
         document.addEventListener("click", (e) => {
             let target = e.target;
+
+            if (e.defaultPrevented === true)
+                return;
+
+            // Ignore clicks on sidebar
+            if (KaToolsV1.getParentElement(this.elements.sidebar, target) !== null)
+                return;
+            if (KaToolsV1.getParentElement(this.elements.indicator, target) !== null)
+                return;
+            // Deselect the element
+            if (KaToolsV1.getParentElement(this, target) === null)
+                this.$eventDispatcher.triggerEvent("selectElement", {element: null});
             target = facet.getEditableParentElement(target);
             this.$eventDispatcher.triggerEvent("selectElement", {element: target});
 
         })
+
+        // Finally - if everything is loaded: Trigger one update
+        document.addEventListener("DOMContentLoaded", () => this.$eventDispatcher.triggerEvent("update"));
     }
 });

@@ -126,8 +126,46 @@ KaToolsV1.eval = (stmt, __scope, e, __refs) => {
         // console.log(r + '(' + stmt + ')');
         return eval(r  + '('+stmt+')')
     } catch (ex) {
-        console.error("cannot eval() stmt: '" + stmt + "': " + ex + " on element ", e, "(context:", __scope, ")");
+        console.error("cannot eval() stmt: '" + stmt + "': " + ex,  " on element ", e, ex,"(context:", __scope, ")");
         throw "eval('" + stmt + "') failed: " + ex;
+    }
+}
+
+/* from core/import-template.js */
+/**
+ * Import a node from external template in current context including the script tags
+ *
+ * @param node {HTMLElement}
+ * @param src {string}      The source filename (for debugging)
+ */
+KaToolsV1.execImportedScriptTags = function (node, src="undefined file") {
+    let chels = node instanceof HTMLTemplateElement ? node.content.childNodes : node.childNodes;
+
+    for (let s of chels) {
+        if (s.tagName !== "SCRIPT") {
+            KaToolsV1.execImportedScriptTags(s, src);
+            continue;
+        }
+        console.log("import", s);
+        let n = document.createElement("script");
+
+        for (let attName of s.getAttributeNames())
+            n.setAttribute(attName, s.getAttribute(attName));
+        n.innerHTML = s.innerHTML;
+        try {
+            let handler = onerror;
+            window.onerror = (msg, url, line) => {
+                console.error(`[ka-include]: Script error in '${src}': ${msg} in line ${line}:\n>>>>>>>>\n`,
+                    n.innerHTML.split("\n")[line-1],
+                    "\n<<<<<<<<\n",
+                    n.innerHTML);
+            }
+            s.replaceWith(n);
+            window.onerror = handler;
+        } catch (e) {
+            console.error(`[ka-include]: Script error in '${src}': ${e}`, e);
+            throw e;
+        }
     }
 }
 
@@ -141,10 +179,7 @@ KaToolsV1.eval = (stmt, __scope, e, __refs) => {
  * @return {string}
  */
 KaToolsV1.strToCamelCase = function (str) {
-    return str.replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, function(match, index) {
-        if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
-        return index === 0 ? match.toLowerCase() : match.toUpperCase();
-    });
+    return str.replace(/(?:^\w|[A-Z]|\b\w)/g, (ltr, idx) => idx === 0 ? ltr.toLowerCase() : ltr.toUpperCase()).replace(/[^a-zA-Z0-9]+/g, '');
 }
 
 /* from core/apply.js */
@@ -155,7 +190,8 @@ KaToolsV1.apply = (selector, scope, recursive=false) => {
 
     let attMap = {
         "textcontent": "textContent",
-        "htmlcontent": "innerHTML"
+        "htmlcontent": "innerHTML",
+        "innerhtml": "innerHTML",
     }
 
     for(let attName of selector.getAttributeNames()) {
@@ -737,6 +773,7 @@ KaToolsV1.provider = new class {
                     state: null,
                     promises: [{resolve, reject}]
                 }
+                console.warn("trying to get undefined service " + name);
                 return
             }
 

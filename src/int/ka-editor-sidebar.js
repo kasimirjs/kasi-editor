@@ -4,7 +4,7 @@
 KaToolsV1.ce_define("ka-editor-sidebar",
 
     async ($tpl, $eventDispatcher) => {
-        let facet = new KaEditorFacet();
+        let facet = new Facet();
         let scope = {
             isOpen: true,
             elementTree: facet.getElementTree(document.querySelector("ka-editor")),

@@ -818,6 +818,10 @@ KaToolsV1.provider = new class {
      * @returns {Promise<Array>}
      */
     async arguments(cb, params = {}) {
+        if (! (typeof cb === "function")) {
+            throw "Invalid function in parameter 1: " + cb;
+        }
+
         return new Promise(async (resolve, reject) => {
             let args = KaToolsV1.getArgs(cb);
             let retArgs = [];

@@ -37,17 +37,24 @@
         elem.setAttribute("data-bs-parent", "#" + find_accordion(elem).id);
         elem.id = lastAccorionId;
     }
+/*
 
+    KaEditor.elements.define("bs-accordion", {
+        actions: ["move", "delete", ""],
+        allow_children: ["bs-*"]
+    });
+
+    KaEditor.elements.define("bs-accordion-item", {
+
+    });
+*/
 
 </script>
 
-<template data-ed-id="bs-accordion">
+<template data-ed-template>
     <!-- Accordion -->
     <div class="accordion accordion-flush"
-         data-ed-name="Accordion"
          data-ed-id="bs-accordion"
-         data-ed-allow-child="bs-accordion-item"
-         data-ed-oninit="init_akkordion($this)"
     >
         <div class="accordion-item" data-ed-name="Item" data-ed-repeat="">
             <div class="accordion-header">

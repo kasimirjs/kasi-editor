@@ -32,6 +32,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
 
         async connected() {
             this.$tpl.render(this.scope);
+            let facet = new Facet();
 
             this.$eventDispatcher.addEventListener("hoverElement", (payload) => {
 
@@ -74,7 +75,8 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                 e.preventDefault();
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
                 // Open Context Menu
-                (new KaEditorFacet).showActions(this.scope.element.elem, e.target);
+                if (facet.getActionsArrayForElement(this.scope.element.elem, "action").length > 0)
+                    facet.showActions(this.scope.element.elem, e.target);
             })
         }
     },

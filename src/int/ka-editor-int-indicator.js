@@ -8,7 +8,7 @@ class KaEditorElementIndicator extends KaEditorElement {
             element: null,
             showBtn: false,
 
-            facet: new KaEditorFacet(),
+            facet: new Facet(),
 
             $fn: {
                 btnClick: async () => {
@@ -37,7 +37,7 @@ class KaEditorElementIndicator extends KaEditorElement {
         this.scope.element = element;
         this.scope.popupOpen = false;
 
-        this.scope.showBtn = this.scope.facet.getActionsArrayForElement(element).length > 0
+        this.scope.showBtn = this.scope.facet.getActionsArrayForElement(element, "action").length > 0
 
         this.$tpl.render(this.scope);
         if (this.$tpl.isFirstRender()) {

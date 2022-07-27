@@ -5,6 +5,15 @@
  */
 KaToolsV1.Widget = class {
 
+    /**
+     * Don't call this directly
+     *
+     * call await Widget.show() instead
+     *
+     * @private
+     * @deprecated Use Widget.show() instead of constructor
+     * @param autoAppendToElement
+     */
     constructor(autoAppendToElement = window.document.body) {
         let self = this.constructor;
 
@@ -38,7 +47,7 @@ KaToolsV1.Widget = class {
                 shadow.append(t);
                 this.$tpl = new KaToolsV1.Template(t);
             }
-            await this.init(...await KaToolsV1.provider.arguments(this.init, {$tpl: this.$tpl}));
+            await this.__init(...await KaToolsV1.provider.arguments(this.__init, {$tpl: this.$tpl}));
             resolve();
         });
 
@@ -70,12 +79,26 @@ KaToolsV1.Widget = class {
 
 
     /**
+     *  Await the ready instance
+     *
+     * @static
+     * @public
+     * @return {Promise<this>}
+     */
+    static async Load() {
+        let i = new this.prototype.constructor();
+        await i.ready();
+        return i;
+    }
+
+
+    /**
      * Called after initialization is complete (Template loaded etc)
      *
      * @abstract
      * @return {Promise<void>}
      */
-    async init() {
+    async __init() {
         await KaToolsV1.sleep(100);
         document.addEventListener("click", this._globalClickEventHandler);
     }

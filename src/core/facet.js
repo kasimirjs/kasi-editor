@@ -2,7 +2,7 @@
 
 
 
-class KaEditorFacet {
+class Facet {
 
 
     /**
@@ -153,16 +153,18 @@ class KaEditorFacet {
 
 
     async showActions(element, positionElementOrEvent) {
-        let m = new KaToolsV1.ContextMenu();
-        await m.ready();
+        //let m = new KaToolsV1.ContextMenu();
+        //await m.ready();
 
-        let actions = this.getActionsArrayForElement(element).map((c) =>
+        let actions = this.getActionsArrayForElement(element, "action").map((c) =>
             new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.action(element))
         );
 
-        let action = await m.show(positionElementOrEvent, actions);
+        // Load the ContextMenu and Wait for click
+        let action = await (await KaToolsV1.ContextMenu.Load()).show(positionElementOrEvent, actions);
 
-        await KaToolsV1.sleep(100);
+
+        await KaToolsV1.sleep(50);
 
         console.log("update");
         (await KaToolsV1.provider.get("$eventDispatcher")).triggerEvent("update");

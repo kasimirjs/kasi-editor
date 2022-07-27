@@ -1,25 +1,30 @@
-
-
+/**
+ * @class
+ * @type {KaToolsV1.ContextMenu}
+ */
 KaToolsV1.ContextMenu = class extends KaToolsV1.Widget {
     static _open_menu = null;
 
     /**
      * show the context menu
      *
+     * @public
      * @param nextToElement {HTMLElement|Event}
      * @param actions       {KaToolsV1.ContextMenuAction[]}
      * @return {Promise<KaToolsV1.ContextMenuAction>}
      */
     async show(nextToElement, actions = []) {
-        let resolve2 = null;
+
 
         // Close other context menus
         if (KaToolsV1.ContextMenu._open_menu !== null)
             KaToolsV1.ContextMenu._open_menu.destroy();
         KaToolsV1.ContextMenu._open_menu = this;
 
-        let promise = new Promise((resolve) => resolve2 = resolve)
         await this.ready();
+
+        let resolve2 = null;
+        let promise = new Promise((resolve) => resolve2 = resolve)
 
         let scope = {
             actions: actions,
@@ -40,8 +45,8 @@ KaToolsV1.ContextMenu = class extends KaToolsV1.Widget {
     }
 
 
-    async init() {
-        super.init()
+    async __init() {
+        super.__init()
     }
 
     static async getTemplate() {

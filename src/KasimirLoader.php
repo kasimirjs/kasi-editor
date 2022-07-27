@@ -18,7 +18,7 @@ class KasimirLoader
 
         "core/init.js",
         "core/ka-editor-element.js",
-        "core/ka-editor-facet.js",
+        "core/facet.js",
         "core/ka-editor-ui-facet.js",
         "core/tools.js",
 

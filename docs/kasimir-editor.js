@@ -97,6 +97,15 @@ KaToolsV1.getParentElement = (selector, element) => {
  */
 KaToolsV1.Widget = class {
 
+    /**
+     * Don't call this directly
+     *
+     * call await Widget.show() instead
+     *
+     * @private
+     * @deprecated Use Widget.show() instead of constructor
+     * @param autoAppendToElement
+     */
     constructor(autoAppendToElement = window.document.body) {
         let self = this.constructor;
 
@@ -130,7 +139,7 @@ KaToolsV1.Widget = class {
                 shadow.append(t);
                 this.$tpl = new KaToolsV1.Template(t);
             }
-            await this.init(...await KaToolsV1.provider.arguments(this.init, {$tpl: this.$tpl}));
+            await this.__init(...await KaToolsV1.provider.arguments(this.__init, {$tpl: this.$tpl}));
             resolve();
         });
 
@@ -162,12 +171,26 @@ KaToolsV1.Widget = class {
 
 
     /**
+     *  Await the ready instance
+     *
+     * @static
+     * @public
+     * @return {Promise<this>}
+     */
+    static async Load() {
+        let i = new this.prototype.constructor();
+        await i.ready();
+        return i;
+    }
+
+
+    /**
      * Called after initialization is complete (Template loaded etc)
      *
      * @abstract
      * @return {Promise<void>}
      */
-    async init() {
+    async __init() {
         await KaToolsV1.sleep(100);
         document.addEventListener("click", this._globalClickEventHandler);
     }
@@ -196,28 +219,33 @@ KaToolsV1.Widget = class {
 }
 
 /* from rfc-elem/ka-context-menu.js */
-
-
+/**
+ * @class
+ * @type {KaToolsV1.ContextMenu}
+ */
 KaToolsV1.ContextMenu = class extends KaToolsV1.Widget {
     static _open_menu = null;
 
     /**
      * show the context menu
      *
+     * @public
      * @param nextToElement {HTMLElement|Event}
      * @param actions       {KaToolsV1.ContextMenuAction[]}
      * @return {Promise<KaToolsV1.ContextMenuAction>}
      */
     async show(nextToElement, actions = []) {
-        let resolve2 = null;
+
 
         // Close other context menus
         if (KaToolsV1.ContextMenu._open_menu !== null)
             KaToolsV1.ContextMenu._open_menu.destroy();
         KaToolsV1.ContextMenu._open_menu = this;
 
-        let promise = new Promise((resolve) => resolve2 = resolve)
         await this.ready();
+
+        let resolve2 = null;
+        let promise = new Promise((resolve) => resolve2 = resolve)
 
         let scope = {
             actions: actions,
@@ -238,8 +266,8 @@ KaToolsV1.ContextMenu = class extends KaToolsV1.Widget {
     }
 
 
-    async init() {
-        super.init()
+    async __init() {
+        super.__init()
     }
 
     static async getTemplate() {
@@ -285,12 +313,12 @@ class KaEditorElement extends KaToolsV1.CustomElement {
 
 }
 
-/* from core/ka-editor-facet.js */
+/* from core/facet.js */
 
 
 
 
-class KaEditorFacet {
+class Facet {
 
 
     /**
@@ -441,16 +469,18 @@ class KaEditorFacet {
 
 
     async showActions(element, positionElementOrEvent) {
-        let m = new KaToolsV1.ContextMenu();
-        await m.ready();
+        //let m = new KaToolsV1.ContextMenu();
+        //await m.ready();
 
-        let actions = this.getActionsArrayForElement(element).map((c) =>
+        let actions = this.getActionsArrayForElement(element, "action").map((c) =>
             new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.action(element))
         );
 
-        let action = await m.show(positionElementOrEvent, actions);
+        // Load the ContextMenu and Wait for click
+        let action = await (await KaToolsV1.ContextMenu.Load()).show(positionElementOrEvent, actions);
 
-        await KaToolsV1.sleep(100);
+
+        await KaToolsV1.sleep(50);
 
         console.log("update");
         (await KaToolsV1.provider.get("$eventDispatcher")).triggerEvent("update");
@@ -531,7 +561,7 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
 
 
     async connected() {
-        let facet = new KaEditorFacet();
+        let facet = new Facet();
 
         this.elements.floater = KaToolsV1.createElement("ka-editor-int-floater", null, null, document.body);
         this.elements.indicator = KaToolsV1.createElement("ka-editor-int-indicator", null, null, document.body);
@@ -555,11 +585,11 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         // Manage the selected Element and apply actions
         this.$eventDispatcher.addEventListener("selectElement", (e) => {
             if (curSelectedElement !== null && curSelectedElement !== e.element) {
-                Object.values((new KaEditorFacet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+                Object.values((new Facet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
                 curSelectedElement = null;
             }
             if (e.element !== null && e.element !== curSelectedElement) {
-                Object.values((new KaEditorFacet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
+                Object.values((new Facet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
                 curSelectedElement = e.element
             }
 
@@ -581,11 +611,6 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
             if (e.defaultPrevented === true)
                 return;
 
-            // Ignore clicks on sidebar
-            if (KaToolsV1.getParentElement(this.elements.sidebar, target) !== null)
-                return;
-            if (KaToolsV1.getParentElement(this.elements.indicator, target) !== null)
-                return;
             // Deselect the element
             if (KaToolsV1.getParentElement(this, target) === null)
                 this.$eventDispatcher.triggerEvent("selectElement", {element: null});
@@ -620,7 +645,7 @@ KaToolsV1.ce_define("ka-editor-container", class extends KaEditorElement {
 
 
 KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $reject){
-    let f = new KaEditorFacet();
+    let f = new Facet();
 
     let scope = {
         element: $args.element,
@@ -661,7 +686,7 @@ class KaEditorElementIndicator extends KaEditorElement {
             element: null,
             showBtn: false,
 
-            facet: new KaEditorFacet(),
+            facet: new Facet(),
 
             $fn: {
                 btnClick: async () => {
@@ -690,7 +715,7 @@ class KaEditorElementIndicator extends KaEditorElement {
         this.scope.element = element;
         this.scope.popupOpen = false;
 
-        this.scope.showBtn = this.scope.facet.getActionsArrayForElement(element).length > 0
+        this.scope.showBtn = this.scope.facet.getActionsArrayForElement(element, "action").length > 0
 
         this.$tpl.render(this.scope);
         if (this.$tpl.isFirstRender()) {
@@ -861,7 +886,7 @@ button:hover {
 KaToolsV1.ce_define("ka-editor-sidebar",
 
     async ($tpl, $eventDispatcher) => {
-        let facet = new KaEditorFacet();
+        let facet = new Facet();
         let scope = {
             isOpen: true,
             elementTree: facet.getElementTree(document.querySelector("ka-editor")),
@@ -969,6 +994,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
 
         async connected() {
             this.$tpl.render(this.scope);
+            let facet = new Facet();
 
             this.$eventDispatcher.addEventListener("hoverElement", (payload) => {
 
@@ -1011,7 +1037,8 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                 e.preventDefault();
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
                 // Open Context Menu
-                (new KaEditorFacet).showActions(this.scope.element.elem, e.target);
+                if (facet.getActionsArrayForElement(this.scope.element.elem, "action").length > 0)
+                    facet.showActions(this.scope.element.elem, e.target);
             })
         }
     },
@@ -1107,7 +1134,7 @@ const KaIndicatorActions = {
         action: (element) => {
             let clone = element.cloneNode(true);
             element.parentElement.insertBefore(clone, element.nextElementSibling);
-            (new KaEditorFacet).initElement(clone);
+            (new Facet).initElement(clone);
         }
     },
     delete: {
@@ -1142,7 +1169,7 @@ const KaIndicatorActions = {
 
             let node = tpl.content.firstElementChild.cloneNode(true);
             element.appendChild(node);
-            (new KaEditorFacet).initElement(node);
+            (new Facet).initElement(node);
         }
     }
 }

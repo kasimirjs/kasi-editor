@@ -16,7 +16,7 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
 
 
     async connected() {
-        let facet = new KaEditorFacet();
+        let facet = new Facet();
 
         this.elements.floater = KaToolsV1.createElement("ka-editor-int-floater", null, null, document.body);
         this.elements.indicator = KaToolsV1.createElement("ka-editor-int-indicator", null, null, document.body);
@@ -40,11 +40,11 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         // Manage the selected Element and apply actions
         this.$eventDispatcher.addEventListener("selectElement", (e) => {
             if (curSelectedElement !== null && curSelectedElement !== e.element) {
-                Object.values((new KaEditorFacet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+                Object.values((new Facet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
                 curSelectedElement = null;
             }
             if (e.element !== null && e.element !== curSelectedElement) {
-                Object.values((new KaEditorFacet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
+                Object.values((new Facet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
                 curSelectedElement = e.element
             }
 
@@ -66,11 +66,6 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
             if (e.defaultPrevented === true)
                 return;
 
-            // Ignore clicks on sidebar
-            if (KaToolsV1.getParentElement(this.elements.sidebar, target) !== null)
-                return;
-            if (KaToolsV1.getParentElement(this.elements.indicator, target) !== null)
-                return;
             // Deselect the element
             if (KaToolsV1.getParentElement(this, target) === null)
                 this.$eventDispatcher.triggerEvent("selectElement", {element: null});

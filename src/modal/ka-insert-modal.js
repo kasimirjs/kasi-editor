@@ -1,7 +1,7 @@
 
 
 KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $reject){
-    let f = new KaEditorFacet();
+    let f = new Facet();
 
     let scope = {
         element: $args.element,

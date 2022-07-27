@@ -35,7 +35,7 @@ const KaIndicatorActions = {
         action: (element) => {
             let clone = element.cloneNode(true);
             element.parentElement.insertBefore(clone, element.nextElementSibling);
-            (new KaEditorFacet).initElement(clone);
+            (new Facet).initElement(clone);
         }
     },
     delete: {
@@ -70,7 +70,7 @@ const KaIndicatorActions = {
 
             let node = tpl.content.firstElementChild.cloneNode(true);
             element.appendChild(node);
-            (new KaEditorFacet).initElement(node);
+            (new Facet).initElement(node);
         }
     }
 }

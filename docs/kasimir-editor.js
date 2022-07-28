@@ -292,19 +292,93 @@ KaToolsV1.ContextMenuAction = class {
     }
 }
 
-/* from core/init.js */
-const KaEditorConfig = {
-    cssStyles: [
-        "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css",
-    ],
-    sidebarTopHtml: '<img src="https://leuffen.de/assets/leuffen-logo-big.svg" height="48" style="margin-left: -10px">',
+/* from core/action-config.js */
 
+class ActionConfig {
 
-    zindex: {
-        sidebar: 1030,
-        indicatorHover: 1031,
-        indicatorSelect: 1031,
+    constructor(name, config) {
+        this.name = name;
+        Object.assign(this, config);
+
     }
+
+    /**
+     * Shortcut to get the template
+     *
+     * @param element
+     * @return {TemplateConfig|null}
+     * @protected
+     */
+    _getTemplateConfig(element) {
+        return KaEditorConfig.templateManager.getTemplateConfig(element);
+    }
+
+    getText(element) {
+        return this.name
+    }
+
+    /**
+     * Return true if this Action is valid for this element
+     *
+     * @param element
+     * @return {boolean}
+     */
+    isValid(element) {
+        return true;
+    }
+
+    isEnabled(element) {
+        return true;
+    }
+
+    async onSelect(element) {
+        console.log("orig")
+    }
+
+    async onDeSelect(element) {
+
+    }
+
+    async onAction(element) {
+
+    }
+
+}
+
+/* from core/action-manager.js */
+
+class ActionManager {
+
+    constructor() {
+        /**
+         *
+         * @type {ActionConfig[]}
+         * @private
+         */
+        this._actions = [];
+    }
+
+    /**
+     *
+     * @param name {string}
+     * @param action {ActionConfig}
+     */
+    define(action) {
+        this._actions.push(action);
+    }
+
+
+    /**
+     *
+     * @param element
+     * @return {ActionConfig[]}
+     */
+    getActionsForElement(element) {
+        if ( ! (element instanceof HTMLElement))
+            return [];
+        return this._actions.filter((a) => a.isValid(element));
+    }
+
 }
 
 /* from core/ka-editor-element.js */
@@ -380,32 +454,19 @@ class Facet {
      * @returns {boolean}
      */
     isEditableElement(element) {
-        return element.getAttributeNames().some(r => r.startsWith("data-ed"))
+        return KaEditorConfig.actionManager.getActionsForElement(element).length > 0;
     }
 
-
-    getActionsForElement(element, requireKey = null) {
-        let actions = Object.keys(KaIndicatorActions)
-            .filter((key) => KaIndicatorActions[key].isValid(element));
-
-
-        if (requireKey !== null)
-            actions = actions.filter((key) => typeof KaIndicatorActions[key][requireKey] !== "undefined")
-
-        let ret =  actions.reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
-        return ret;
-    }
 
     /**
      *
      * @param element
-     * @param requireKey
-     * @return *[]
+     * @param visual {Boolean}      Show only action with text
+     * @return {ActionConfig[]}
      */
-    getActionsArrayForElement (element, requireKey = null) {
-        let actions = this.getActionsForElement(element, requireKey);
-
-        return Object.keys(actions).map((key) => actions[key]);
+    getActionsForElement(element, visual = false) {
+        return KaEditorConfig.actionManager.getActionsForElement(element)
+            .filter((ac) => ac.getText(element) !== null);
     }
 
 
@@ -472,8 +533,8 @@ class Facet {
         //let m = new KaToolsV1.ContextMenu();
         //await m.ready();
 
-        let actions = this.getActionsArrayForElement(element, "action").map((c) =>
-            new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.action(element))
+        let actions = this.getActionsForElement(element, true).map((c) =>
+            new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.onAction(element))
         );
 
         // Load the ContextMenu and Wait for click
@@ -485,6 +546,113 @@ class Facet {
         console.log("update");
         (await KaToolsV1.provider.get("$eventDispatcher")).triggerEvent("update");
 
+    }
+
+}
+
+/* from core/template-manager.js */
+
+
+class TemplateManager {
+
+    constructor() {
+        /**
+         *
+         * @type {Object<string, TemplateConfig>}
+         * @private
+         */
+        this._templates = {}
+    }
+
+    /**
+     * The Template ID
+     *
+     * @param config {TemplateConfig}
+     */
+    define(config) {
+        this._templates[config.tid] = config;
+    }
+
+    /**
+     *
+     * @param element {HTMLElement}
+     * @return {null|TemplateConfig}
+     */
+    getTemplateConfig(element) {
+        if ( ! element.hasAttribute("data-ed-tid"))
+            return null;
+
+        return this._templates[element.getAttribute("data-ed-tid")] ?? null
+    }
+
+    /**
+     *
+     * @param parentElementTemplateConfig {TemplateConfig}
+     * @return {TemplateConfig[]}
+     */
+    getAllowedChildTemplates(parentElementTemplateConfig) {
+        return Object.keys(this._templates).map((key) => this._templates[key]).filter((conf) => conf.isAllowedChild(parentElementTemplateConfig))
+    }
+
+}
+
+/* from core/template-config.js */
+
+
+class TemplateConfig {
+
+    /**
+     *
+     * @param tid {string}  Template Id (as specified in data-ed-tid)
+     * @param config {*}
+     */
+    constructor(tid, config = {}) {
+        this.tid = tid;
+        Object.assign(this, config);
+    }
+
+    getName(element) {
+        return this.tid
+    }
+
+    /**
+     *
+     * @param parentTemplateConfig {TemplateConfig}
+     * @return {boolean}
+     */
+    isAllowedChild(parentTemplateConfig) {
+        return true;
+    }
+
+    isTextEditable() {
+        return false;
+    }
+
+    isRepeatable() {
+        return true;
+    }
+
+    /**
+     * Initialize the Node (after clone or insert)
+     * only the single node!
+     *
+     * @param element
+     */
+    initElement(element) {
+
+    }
+
+    /**
+     * Clones one instance of the original Template
+     *
+     * @return {HTMLElement|null}
+     */
+    getInstance() {
+        let tpl =  Array.from(document.querySelectorAll("template"))
+            .filter((el) => el.content.firstElementChild.getAttribute("data-ed-tid") === this.tid);
+        if (tpl.length === 0)
+            throw "<template> for tid: " + this.tid + "missing.";
+        return tpl[0].cloneNode(true);
     }
 
 }
@@ -542,6 +710,106 @@ function ka_ed_get_last_id() {
     return ka_last_id;
 }
 
+/* from core/config.js */
+const KaEditorConfig = {
+    cssStyles: [
+        "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css",
+    ],
+    sidebarTopHtml: '<img src="https://leuffen.de/assets/leuffen-logo-big.svg" height="48" style="margin-left: -10px">',
+
+
+    zindex: {
+        sidebar: 1030,
+        indicatorHover: 1031,
+        indicatorSelect: 1031,
+    },
+
+    /**
+     * @type {TemplateManager}
+     */
+    templateManager: new TemplateManager(),
+
+    /**
+     * @type {ActionManager}
+     */
+    actionManager: new ActionManager()
+}
+
+/* from actions/edit-action.js */
+
+KaEditorConfig.actionManager.define(new ActionConfig("text-edit-inline", {
+
+    isValid: (element) => {
+        return element.hasAttribute("data-ed-text");
+        //return KaEditorConfig.templateManager.getTemplateConfig(element).isTextEditable(element);
+    },
+
+    getText: (element) => {
+        return null; // No visual action -> Don't display in Menu
+    },
+
+    onSelect: async (element) => {
+        console.log("editor on");
+        element.contentEditable = true;
+        element.focus();
+    },
+
+    onDeSelect: (element) => {
+        element.contentEditable = false;
+    }
+}));
+
+/* from actions/clone-action.js */
+
+KaEditorConfig.actionManager.define(new ActionConfig("clone", {
+
+    getText: (element) => {
+        return "Clone Node";
+    },
+
+    isValid: (element) => {
+        let template = KaEditorConfig.templateManager.getTemplateConfig(element);
+        if (template === null)
+            return false;
+        return template.isRepeatable();
+    },
+
+    onAction: (element) => {
+        let template = KaEditorConfig.templateManager.getTemplateConfig(element);
+        let clone = element.cloneNode(true);
+
+        element.parentElement.insertBefore(clone, element.nextElementSibling);
+        template.initElement(element);
+    }
+}));
+
+/* from actions/append-child-action.js */
+
+KaEditorConfig.actionManager.define(new ActionConfig("append-child", {
+
+    getText: (element) => {
+        return "Append child";
+    },
+
+    isValid: (element) => {
+        let myTemplateConfig = KaEditorConfig.templateManager.getTemplateConfig(element);
+        return KaEditorConfig.templateManager.getAllowedChildTemplates(myTemplateConfig)
+    },
+
+    onAction: async (element) => {
+        let templateConfig = KaEditorConfig.templateManager.getTemplateConfig(element);
+        let childTemplates = KaEditorConfig.templateManager.getAllowedChildTemplates(templateConfig);
+
+        /**
+         * @type {TemplateConfig}
+         */
+        let tpl = await KaToolsV1.modal.show("ka-insert-modal", {templateConfigs: childTemplates});
+        let node = tpl.getInstance();
+        element.append(node);
+        tpl.initElement(node);
+    }
+}));
+
 /* from el/ka-editor.js */
 
 
@@ -583,14 +851,15 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         let curSelectedElement = null;
 
         // Manage the selected Element and apply actions
-        this.$eventDispatcher.addEventListener("selectElement", (e) => {
-            if (curSelectedElement !== null && curSelectedElement !== e.element) {
-                Object.values((new Facet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+        this.$eventDispatcher.addEventListener("selectElement", (el) => {
+            if (curSelectedElement !== null && curSelectedElement !== el.element) {
+                facet.getActionsForElement(curSelectedElement).forEach((action) => action.onDeSelect(curSelectedElement))
                 curSelectedElement = null;
             }
-            if (e.element !== null && e.element !== curSelectedElement) {
-                Object.values((new Facet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
-                curSelectedElement = e.element
+            if (el.element !== null && el.element !== curSelectedElement) {
+
+                facet.getActionsForElement(el.element).forEach((action) => action.onSelect(el.element));
+                curSelectedElement = el.element
             }
 
         })
@@ -608,6 +877,8 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         document.addEventListener("click", (e) => {
             let target = e.target;
 
+            if (KaToolsV1.getParentElement(this, target) === null)
+                return;
             if (e.defaultPrevented === true)
                 return;
 
@@ -620,7 +891,10 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         })
 
         // Finally - if everything is loaded: Trigger one update
-        document.addEventListener("DOMContentLoaded", () => this.$eventDispatcher.triggerEvent("update"));
+
+        await KaToolsV1.sleep(500);
+        this.$eventDispatcher.triggerEvent("update")
+
     }
 });
 
@@ -649,7 +923,10 @@ KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $rejec
 
     let scope = {
         element: $args.element,
-        templates: f.getAllowedChildTemplates($args.element),
+        /**
+         * @type {TemplateConfig}
+         */
+        templates: $args.templateConfigs,
         $resolve
     }
     $tpl.render(scope);
@@ -663,7 +940,7 @@ KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $rejec
 </div>
 <div class="modal-content">
     <ul class="list-group">
-        <li class="list-group-item" ka.for="let curTpl of templates" ><a href="javascript:void(0)" ka.on.click="$resolve(curTpl)" ka.htmlContent="(new KaEditorUiFacet(curTpl.content.firstElementChild)).getNaviNameHtml()"></a></li>
+        <li class="list-group-item" ka.for="let curTpl of templates" ><a href="javascript:void(0)" ka.on.click="$resolve(curTpl)" ka.htmlContent="curTpl.getName()"></a></li>
     </ul>
 
 </div>
@@ -689,8 +966,8 @@ class KaEditorElementIndicator extends KaEditorElement {
             facet: new Facet(),
 
             $fn: {
-                btnClick: async () => {
-                    console.log ("click");
+                btnClick: async (event) => {
+                    event.preventDefault();
                     await this.scope.facet.showActions(this.scope.element, this.scope.$ref.btn1);
                 },
             }
@@ -715,7 +992,7 @@ class KaEditorElementIndicator extends KaEditorElement {
         this.scope.element = element;
         this.scope.popupOpen = false;
 
-        this.scope.showBtn = this.scope.facet.getActionsArrayForElement(element, "action").length > 0
+        this.scope.showBtn = this.scope.facet.getActionsForElement(element, true).length > 0
 
         this.$tpl.render(this.scope);
         if (this.$tpl.isFirstRender()) {
@@ -772,7 +1049,7 @@ KaToolsV1.ce_define("ka-editor-int-indicator",  KaEditorElementIndicator , KaToo
 </style>
 <div ka.attr.hidden=" ! showBtn" ka.style.top="element.getBoundingClientRect().top + window.scrollY" ka.style.left="element.getBoundingClientRect().left" ka.style.width="element.getBoundingClientRect().width" class="indicator-menu">
     <div ka.ref="'btn1'"  class="btn-group float-end offset-button" >
-        <button  ka.on.click="$fn.btnClick()" ka.ref="'button1'" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <button  ka.on.click="$fn.btnClick($event)" ka.ref="'button1'" class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="bi">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 16 16">
                     <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/>
@@ -1033,11 +1310,13 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
             this.scope.$ref.div1.addEventListener("click", (e) => {
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
             })
+
+            // ContextMenü
             this.scope.$ref.div1.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
                 // Open Context Menu
-                if (facet.getActionsArrayForElement(this.scope.element.elem, "action").length > 0)
+                if (facet.getActionsForElement(this.scope.element.elem, true).length > 0)
                     facet.showActions(this.scope.element.elem, e.target);
             })
         }

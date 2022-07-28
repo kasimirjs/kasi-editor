@@ -1,22 +1,31 @@
 
-<template data-ed-id="bs-row">
-    <div class="row" data-ed-allow-child="bs-col">
+
+<script>
+
+    KaEditorConfig.templateManager.define(new TemplateConfig("bs-col", {
+
+    }));
+
+</script>
+
+<template>
+    <div class="row" data-ed-tid="bs-col">
     </div>
 </template>
 
-<template data-ed-id="bs-col">
+<template>
     <div class="col" data-ed-allow-child="*"></div>
 </template>
 
 
-<template data-ed-id="h1">
-    <h1 data-ed-text data-ed-name="Header1">
+<template>
+    <h1 data-ed-text data-ed-tid="h1">
         Header 1 Element
     </h1>
 </template>
 
-<template data-ed-id="p">
-    <p data-ed-text data-ed-repeat data-ed-name="Paragraph">
+<template>
+    <p data-ed-text data-ed-name="p">
         Paragraph
     </p>
 </template>

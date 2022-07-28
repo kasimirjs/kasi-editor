@@ -71,11 +71,13 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
             this.scope.$ref.div1.addEventListener("click", (e) => {
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
             })
+
+            // ContextMenü
             this.scope.$ref.div1.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
                 this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
                 // Open Context Menu
-                if (facet.getActionsArrayForElement(this.scope.element.elem, "action").length > 0)
+                if (facet.getActionsForElement(this.scope.element.elem, true).length > 0)
                     facet.showActions(this.scope.element.elem, e.target);
             })
         }

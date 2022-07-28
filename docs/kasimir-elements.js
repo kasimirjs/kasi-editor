@@ -1,6 +1,6 @@
 /* KasimirJS EMBED - documentation: https://kasimirjs.infracamp.org - Author: Matthias Leuffen <m@tth.es>*/
 
-/* from core/init.js */
+/* from core/config.js */
 
 
 
@@ -140,7 +140,7 @@ customElements.define("ka-include", class extends HTMLElement {
 
 });
 
-/* from styles/init.js */
+/* from styles/config.js */
 
 if (typeof KaToolsV1.style === "undefined")
     KaToolsV1.style = {};

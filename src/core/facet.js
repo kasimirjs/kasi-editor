@@ -64,32 +64,19 @@ class Facet {
      * @returns {boolean}
      */
     isEditableElement(element) {
-        return element.getAttributeNames().some(r => r.startsWith("data-ed"))
+        return KaEditorConfig.actionManager.getActionsForElement(element).length > 0;
     }
 
-
-    getActionsForElement(element, requireKey = null) {
-        let actions = Object.keys(KaIndicatorActions)
-            .filter((key) => KaIndicatorActions[key].isValid(element));
-
-
-        if (requireKey !== null)
-            actions = actions.filter((key) => typeof KaIndicatorActions[key][requireKey] !== "undefined")
-
-        let ret =  actions.reduce((cur, key) => Object.assign(cur, {[key]: KaIndicatorActions[key]}), {})
-        return ret;
-    }
 
     /**
      *
      * @param element
-     * @param requireKey
-     * @return *[]
+     * @param visual {Boolean}      Show only action with text
+     * @return {ActionConfig[]}
      */
-    getActionsArrayForElement (element, requireKey = null) {
-        let actions = this.getActionsForElement(element, requireKey);
-
-        return Object.keys(actions).map((key) => actions[key]);
+    getActionsForElement(element, visual = false) {
+        return KaEditorConfig.actionManager.getActionsForElement(element)
+            .filter((ac) => ac.getText(element) !== null);
     }
 
 
@@ -156,8 +143,8 @@ class Facet {
         //let m = new KaToolsV1.ContextMenu();
         //await m.ready();
 
-        let actions = this.getActionsArrayForElement(element, "action").map((c) =>
-            new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.action(element))
+        let actions = this.getActionsForElement(element, true).map((c) =>
+            new KaToolsV1.ContextMenuAction(c.name, c.name, null, async() => await c.onAction(element))
         );
 
         // Load the ContextMenu and Wait for click

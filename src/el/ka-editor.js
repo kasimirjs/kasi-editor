@@ -38,14 +38,15 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         let curSelectedElement = null;
 
         // Manage the selected Element and apply actions
-        this.$eventDispatcher.addEventListener("selectElement", (e) => {
-            if (curSelectedElement !== null && curSelectedElement !== e.element) {
-                Object.values((new Facet()).getActionsForElement(curSelectedElement, "onDeSelect")).forEach((action) => action.onDeSelect(curSelectedElement))
+        this.$eventDispatcher.addEventListener("selectElement", (el) => {
+            if (curSelectedElement !== null && curSelectedElement !== el.element) {
+                facet.getActionsForElement(curSelectedElement).forEach((action) => action.onDeSelect(curSelectedElement))
                 curSelectedElement = null;
             }
-            if (e.element !== null && e.element !== curSelectedElement) {
-                Object.values((new Facet()).getActionsForElement(e.element, "onSelect")).forEach((action) => action.onSelect(e.element))
-                curSelectedElement = e.element
+            if (el.element !== null && el.element !== curSelectedElement) {
+
+                facet.getActionsForElement(el.element).forEach((action) => action.onSelect(el.element));
+                curSelectedElement = el.element
             }
 
         })
@@ -63,6 +64,8 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         document.addEventListener("click", (e) => {
             let target = e.target;
 
+            if (KaToolsV1.getParentElement(this, target) === null)
+                return;
             if (e.defaultPrevented === true)
                 return;
 
@@ -75,6 +78,9 @@ KaToolsV1.ce_define("ka-editor", class extends KaEditorElement {
         })
 
         // Finally - if everything is loaded: Trigger one update
-        document.addEventListener("DOMContentLoaded", () => this.$eventDispatcher.triggerEvent("update"));
+
+        await KaToolsV1.sleep(500);
+        this.$eventDispatcher.triggerEvent("update")
+
     }
 });

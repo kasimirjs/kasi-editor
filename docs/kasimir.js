@@ -1,6 +1,6 @@
 /* KasimirJS EMBED - documentation: https://kasimirjs.infracamp.org - Author: Matthias Leuffen <m@tth.es>*/
 
-/* from core/init.js */
+/* from core/config.js */
 
 
 

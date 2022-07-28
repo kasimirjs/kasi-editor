@@ -7,6 +7,8 @@ class KasimirLoader
 
 
     const MAP = [
+
+
         "rfc/ka-position-element-next-to.js",
         "rfc/ka-create-element.js",
         "rfc/ka-get-parent-element.js",
@@ -16,13 +18,21 @@ class KasimirLoader
         "rfc-elem/ka-context-menu-action.js",
 
 
-        "core/init.js",
+        "core/action-config.js",
+        "core/action-manager.js",
         "core/ka-editor-element.js",
         "core/facet.js",
+        "core/template-manager.js",
+
+        "core/template-config.js",
         "core/ka-editor-ui-facet.js",
         "core/tools.js",
 
+        "core/config.js",
 
+        "actions/edit-action.js",
+        "actions/clone-action.js",
+        "actions/append-child-action.js",
 
         "el/ka-editor.js",
         "el/ka-editor-container.js",

@@ -9,5 +9,15 @@ const KaEditorConfig = {
         sidebar: 1030,
         indicatorHover: 1031,
         indicatorSelect: 1031,
-    }
+    },
+
+    /**
+     * @type {TemplateManager}
+     */
+    templateManager: new TemplateManager(),
+
+    /**
+     * @type {ActionManager}
+     */
+    actionManager: new ActionManager()
 }

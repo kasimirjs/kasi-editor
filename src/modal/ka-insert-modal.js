@@ -5,7 +5,10 @@ KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $rejec
 
     let scope = {
         element: $args.element,
-        templates: f.getAllowedChildTemplates($args.element),
+        /**
+         * @type {TemplateConfig}
+         */
+        templates: $args.templateConfigs,
         $resolve
     }
     $tpl.render(scope);
@@ -19,7 +22,7 @@ KaToolsV1.modal.define("ka-insert-modal", function($tpl, $args, $resolve, $rejec
 </div>
 <div class="modal-content">
     <ul class="list-group">
-        <li class="list-group-item" ka.for="let curTpl of templates" ><a href="javascript:void(0)" ka.on.click="$resolve(curTpl)" ka.htmlContent="(new KaEditorUiFacet(curTpl.content.firstElementChild)).getNaviNameHtml()"></a></li>
+        <li class="list-group-item" ka.for="let curTpl of templates" ><a href="javascript:void(0)" ka.on.click="$resolve(curTpl)" ka.htmlContent="curTpl.getName()"></a></li>
     </ul>
 
 </div>

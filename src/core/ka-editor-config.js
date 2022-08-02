@@ -1,4 +1,7 @@
-const KaEditorConfig = {
+import {TemplateManager} from "./template/template-manager";
+import {ActionManager} from "./action/action-manager";
+
+export const KaEditorConfig = {
     cssStyles: [
         "https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css",
     ],

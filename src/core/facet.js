@@ -1,22 +1,26 @@
+import {EditorContainer} from "./editor-container";
+import {KaEditorConfig} from "./ka-editor-config";
 
-
-
-
-class Facet {
-
+export class Facet {
 
     /**
-     * Return a list of HtmlAttributes that define a Editable Element
      *
-     * @returns {string[]}
+     * @param config {KaEditorConfig}
+     * @param bus {KaMessageBus}
      */
-    getAllPropNames() {
-        let ret = [];
-        for(let en in KaIndicatorActions)
-            ret.push(...KaIndicatorActions[en].on);
-        return ret;
-    }
+    constructor(config, bus) {
+        /**
+         *
+         * @type {EditorContainer}
+         */
+        this.container = EditorContainer.getInstance();
 
+        /**
+         *
+         * @type {KaEditorConfig}
+         */
+        this.config = config
+    }
 
     /**
      *
@@ -39,32 +43,13 @@ class Facet {
 
 
     /**
-     * Return the Indicator Actions for
-     * @param element
-     * @param numActions
-     * @returns {*}
-     */
-    getIndicatorActions(element, numActions=3) {
-        let ret = [null, null, null];
-        for (let an in KaIndicatorActions) {
-            let a = KaIndicatorActions[an];
-            if (typeof a.getIndicator === "undefined" || typeof a.indicatorRow === "undefined")
-                continue;
-            if (a.isValid(element))
-                ret[a.indicatorRow] = a;
-        }
-        return ret;
-    }
-
-
-    /**
      * Return true if this element is editable (has at least one data-ed attribute
      *
      * @param element {HTMLElement}
      * @returns {boolean}
      */
     isEditableElement(element) {
-        return KaEditorConfig.actionManager.getActionsForElement(element).length > 0;
+        return this.config.actionManager.getActionsForElement(element).length > 0;
     }
 
 
@@ -76,7 +61,7 @@ class Facet {
      */
     getActionsForElement(element, visual = false) {
         return KaEditorConfig.actionManager.getActionsForElement(element)
-            .filter((ac) => ac.getText(element) !== null);
+            .filter((ac) => visual ? ac.getText(element) !== null : true);
     }
 
 
@@ -98,31 +83,6 @@ class Facet {
     }
 
 
-    /**
-     * Returns all Templates that can be inserted as child to this node
-     *
-     * @param curTarget {HTMLElement}
-     * @returns {HTMLTemplateElement[]}
-     */
-    getAllowedChildTemplates (curTarget) {
-        if ( ! curTarget.hasAttribute("data-ed-allow-child"))
-            return [];
-        let selectIds = curTarget.getAttribute("data-ed-allow-child").split(" ");
-
-        let tpls = document.querySelectorAll("template[data-ed-id]");
-        let ret = [];
-        for(let selectId of selectIds) {
-            if (selectId.trim() === "")
-                continue;
-            for(let curTpl of tpls) {
-                let regex = `^${selectId}$`.replace("*", ".*");
-                if (curTpl.getAttribute("data-ed-id").match(new RegExp(regex))) {
-                    ret.push(curTpl);
-                }
-            }
-        }
-        return ret;
-    }
 
     /**
      * Initialize a newly or copied element

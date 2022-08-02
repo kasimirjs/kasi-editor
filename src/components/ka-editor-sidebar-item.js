@@ -1,11 +1,17 @@
+import {ka_ce_define} from "kasimir-embed/src/ce/ka-ce-define";
+import {KaCustomElement} from "kasimir-embed/src/ce/custom-element";
+import {EditorContainer} from "../core/editor-container";
+import {HoverMessage} from "../core/messages/hover-message";
+import {SelectMessage} from "../core/messages/select-message";
+import {ka_html} from "kasimir-embed/src/ce/html";
 
 
-KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElement {
+ka_ce_define("ka-editor-sidebar-item", class extends KaCustomElement {
 
         constructor() {
             super();
 
-
+            this.bus = null;
             this.scope = {
                 element: null,
                 hovered : false,
@@ -13,7 +19,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                 $fn: {
                     runAction: async (action) => {
                         await action.action(this.scope.element.elem);
-                        this.$eventDispatcher.triggerEvent("update");
+                        this.bus.trigger(new UpdateMessage());
 
                     }
                 }
@@ -31,27 +37,31 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
         }
 
         async connected() {
-            this.$tpl.render(this.scope);
-            let facet = new Facet();
+            let container = EditorContainer.getInstance();
+            let bus = await container.getBus();
+            this.bus = bus;
 
-            this.$eventDispatcher.addEventListener("hoverElement", (payload) => {
+            let facet = await container.getFacet();
+
+            this.$tpl.render(this.scope);
+
+            bus.on(HoverMessage, (msg) => {
 
 
                 this.scope.hovered = false;
 
-                if (payload.element === null) {
+                if (msg.element === null) {
                     return;
                 }
 
                 if (this.scope.selected)
                     return;
-                if (payload.element === this.scope.element.elem)
+                if (msg.element === this.scope.element.elem)
                     this.scope.hovered = true;
                 this.$tpl.render();
             })
-            this.$eventDispatcher.addEventListener("selectElement", (payload) => {
+            bus.on(SelectMessage,(payload) => {
                 this.scope.selected = false;
-
                 if (payload.element === null) {
                     this.$tpl.render();
                     return;
@@ -61,21 +71,21 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
                     this.scope.selected = true;
                 }
                 this.$tpl.render();
-                if (payload.origin !== "sidebar" && payload.element === this.scope.element.elem)
-                    this.$eventDispatcher.triggerEvent("scrollSideBarIntoView", {element: this.scope.$ref.div1});
+                //if (payload.origin !== "sidebar" && payload.element === this.scope.element.elem)
+                    //this.$eventDispatcher.triggerEvent("scrollSideBarIntoView", {element: this.scope.$ref.div1});
 
             })
             this.scope.$ref.div1.addEventListener("pointerenter", (e) => {
-                this.$eventDispatcher.triggerEvent("hoverElement", {element: this.scope.element.elem});
+                bus.trigger(new HoverMessage(this.scope.element.elem));
             })
             this.scope.$ref.div1.addEventListener("click", (e) => {
-                this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
+                bus.trigger(new SelectMessage(this.scope.element.elem, 'sidebar'));
             })
 
             // ContextMenü
             this.scope.$ref.div1.addEventListener("contextmenu", (e) => {
                 e.preventDefault();
-                this.$eventDispatcher.triggerEvent("selectElement", {element: this.scope.element.elem, origin: 'sidebar'});
+                bus.trigger(new SelectMessage(this.scope.element.elem, 'sidebar'));
                 // Open Context Menu
                 if (facet.getActionsForElement(this.scope.element.elem, true).length > 0)
                     facet.showActions(this.scope.element.elem, e.target);
@@ -83,7 +93,7 @@ KaToolsV1.ce_define("ka-editor-sidebar-item", class extends KaToolsV1.CustomElem
         }
     },
 // language=html
-KaToolsV1.html`
+ka_html`
 
     <style>
         .selected {

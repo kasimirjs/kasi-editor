@@ -1,6 +1,6 @@
 
 
-class TemplateConfig {
+export class TemplateConfig {
 
     /**
      *
@@ -53,7 +53,7 @@ class TemplateConfig {
             .filter((el) => el.content.firstElementChild.getAttribute("data-ed-tid") === this.tid);
         if (tpl.length === 0)
             throw "<template> for tid: " + this.tid + "missing.";
-        return tpl[0].cloneNode(true);
+        return tpl[0].content.firstElementChild.cloneNode(true);
     }
 
 }

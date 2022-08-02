@@ -1,5 +1,5 @@
 
-class ActionManager {
+export class ActionManager {
 
     constructor() {
         /**

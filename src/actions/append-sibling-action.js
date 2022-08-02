@@ -1,19 +1,24 @@
-import {ActionConfig} from "../core/action/action-config";
 import {KaEditorConfig} from "../core/ka-editor-config";
+import {ActionConfig} from "../core/action/action-config";
 
-KaEditorConfig.actionManager.define(new ActionConfig("append-child", {
+KaEditorConfig.actionManager.define(new ActionConfig("append-sibling", {
 
     getText: (element) => {
         return "Append child";
     },
 
     isValid: (element) => {
-        let myTemplateConfig = KaEditorConfig.templateManager.getTemplateConfig(element);
+        let myTemplateConfig = KaEditorConfig.templateManager.getTemplateConfig(element.parentElement);
         return KaEditorConfig.templateManager.getAllowedChildTemplates(myTemplateConfig)
     },
 
+    /**
+     *
+     * @param element {HTMLElement}
+     * @return {Promise<void>}
+     */
     onAction: async (element) => {
-        let templateConfig = KaEditorConfig.templateManager.getTemplateConfig(element);
+        let templateConfig = KaEditorConfig.templateManager.getTemplateConfig(element.parentElement);
         let childTemplates = KaEditorConfig.templateManager.getAllowedChildTemplates(templateConfig);
 
         /**
@@ -21,8 +26,8 @@ KaEditorConfig.actionManager.define(new ActionConfig("append-child", {
          */
         let tpl = await KaToolsV1.modal.show("ka-insert-modal", {templateConfigs: childTemplates});
         let node = tpl.getInstance();
-        console.log("create child", node);
-        element.append(node);
+
+        element.parentElement.insertBefore(node, element.nextElementSibling);
         tpl.initElement(node);
     }
 }));

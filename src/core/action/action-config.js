@@ -1,5 +1,5 @@
 
-class ActionConfig {
+export class ActionConfig {
 
     constructor(name, config) {
         this.name = name;

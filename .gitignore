@@ -1,6 +1,10 @@
 /.idea
 /vendor
+
 /node_modules
+/workspaces
+/dist
+
 /.phpunit.result.cache
 /.env
 

@@ -1,6 +1,6 @@
 
 
-class TemplateManager {
+export class TemplateManager {
 
     constructor() {
         /**
@@ -26,6 +26,8 @@ class TemplateManager {
      * @return {null|TemplateConfig}
      */
     getTemplateConfig(element) {
+        if ( ! (element instanceof HTMLElement))
+            return null;
         if ( ! element.hasAttribute("data-ed-tid"))
             return null;
 

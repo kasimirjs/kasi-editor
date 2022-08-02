@@ -41,11 +41,11 @@ class KaEditorElementIndicator extends KaEditorElement {
 
         this.$tpl.render(this.scope);
         if (this.$tpl.isFirstRender()) {
-
+            console.log("attach it");
             window.setInterval(()=> {
                 if (this.scope.element !== null)
                     this.$tpl.render()
-            }, 100);
+            }, 500);
             //this.scope.$ref.btn1.addEventListener("click", (e) => e.stopPropagation());
         }
     }
@@ -60,7 +60,7 @@ class KaEditorElementIndicator extends KaEditorElement {
 }
 
 // language=html
-KaToolsV1.ce_define("ka-editor-int-indicator",  KaEditorElementIndicator , KaToolsV1.html`
+KaToolsV1.ce_define("ka-editor-components-indicator",  KaEditorElementIndicator , KaToolsV1.html`
     <link ka.for="let style of KaEditorConfig.cssStyles" ka.attr.href="style" rel="stylesheet">
 
 

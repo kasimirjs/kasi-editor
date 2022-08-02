@@ -1,3 +1,5 @@
+import {KaEditorConfig} from "../core/ka-editor-config";
+import {ActionConfig} from "../core/action/action-config";
 
 KaEditorConfig.actionManager.define(new ActionConfig("clone", {
 

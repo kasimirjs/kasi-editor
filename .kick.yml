@@ -1,14 +1,14 @@
 version: 1
-from: "ghcr.io/nfra-project/kickstart-flavor-php:8.1"
+from: "ghcr.io/nfra-project/kickstart-flavor-php:unstable"
 ports: "80:80;4000:4000;4100:4100"
 
-packages: [jekyll, ruby-jekyll-coffeescript, ruby-jekyll-optional-front-matter]
+packages: []
 
 command:
   build:
     - sudo chmod 777 -R /var/www/html
-    - sudo chmod 777 /opt/docs/kasimir.js
     - composer update
+    - npm install
 
 
 
@@ -16,8 +16,13 @@ command:
     jekyll serve -s /opt/docs -d /var/www/html --drafts --livereload --port 4000 --livereload-port 4100 --host 0.0.0.0
 
   dev:
-    - killall jekyll ||  echo "no job"
-    - D:kick jekyll
+   # - webpack build --mode development
+
+  serve:
+    - webpack serve --mode development
+
+  setup:
+    - git clone git@github.com:kasimirjs/kasi-embed.git workspaces/kasi-embed/
 
   killall:
     killall jekyll
